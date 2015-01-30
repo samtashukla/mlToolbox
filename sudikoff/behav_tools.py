@@ -8,6 +8,7 @@ from __future__ import division
 from scipy.stats import norm
 from math import exp,sqrt
 Z = norm.ppf
+import pandas as pd
 
 def calc_sdt(data, coding_dict=None, measures=None):
     
