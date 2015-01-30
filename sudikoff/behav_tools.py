@@ -25,12 +25,12 @@ def calc_sdt(data, coding_dict=None, measures=None):
         and subjective "old" response labels (old_resp; list of strings).
             Example:
             coding_dict = dict(objective_col='TrialType', # column name for new
-                       old=['old'], # objectively old label
-                       new=['similar', 'new'], # objectively new label
-                       response_col='Resp_bin', #
-                       old_resp=['Old'],
-                       subj_col='Subject',
-                       )
+                               old=['old'], # objectively old label
+                               new=['similar', 'new'], # objectively new label
+                               response_col='Resp_bin', #
+                               old_resp=['Old'],
+                               subj_col='Subject',
+                               )
     measures : list of strings
         list of SDT measures to include in output; options are 'd' (dprime), 'beta', 'c', and 'Ad'
     Returns
@@ -85,6 +85,68 @@ def calc_sdt(data, coding_dict=None, measures=None):
             row = pd.Series({subj_col: subj,
                              'measure': measure,
                              'value': out[measure]})
+            df = df.append(row, ignore_index=True)
+
+    return df
+
+
+def calc_roc(data, coding_dict=None):
+
+    """Calculate ROC curve for a pandas df
+    Parameters
+    ----------
+    data : Pandas dataframe
+        dataframe including cols for subject, objective status of each trial (e.g., old, new),
+        response for each trial (e.g., 1-5 confidence scale)
+    coding_dict : dict
+        dictionary with information about objective (objective_col; string) and
+        response columns (response_col; string), subject column (subj_col; string),
+        objective old (old; list of strings) and new (new; list of strings) labels,
+        and subjective responses (old_resp; list of strings).
+            Example:
+            coding_dict = dict(objective_col='TrialType', # column name for new
+                               old=['old'], # objectively old label
+                               new=['similar', 'new'], # objectively new label
+                               response_col='Response',
+                               subj_col='Subject',
+                               )
+
+    Returns
+    -------
+    df : Pandas dataframe
+        A longform dataframe with a column for subject ID, level of confidence, and
+        proportions of responses for old and new trials
+    """
+
+    # get relevant info
+    subj_col = coding_dict['subj_col']
+    obj_col = coding_dict['objective_col']
+    resp_col = coding_dict['response_col']
+    old = coding_dict['old']
+    new = coding_dict['new']
+
+    max_resp = int(data[resp_col].max())
+
+    # init new dataframe
+    df = pd.DataFrame(columns=[subj_col, 'conf_level', 'old', 'new'])
+
+    # calculate dprime for each subj
+    for subj in data[subj_col].unique():
+
+        data_s = data[data[subj_col] == subj]
+        count_old = data_s[data_s[obj_col].isin(old)].Trial.count()
+        count_new = data_s[data_s[obj_col].isin(new)].Trial.count()
+
+        for level in range(1, max_resp+1):
+            count_old_tolevel = data_s[(data_s[obj_col].isin(old)) &
+                                       (data_s[resp_col] >= level)].Trial.count()
+            count_new_tolevel = data_s[(data_s[obj_col].isin(new)) &
+                                       (data_s[resp_col] >= level)].Trial.count()
+
+            row = pd.Series({subj_col: subj,
+                            'conf_level': level,
+                            'old': count_old_tolevel/count_old,
+                            'new': count_new_tolevel/count_new})
             df = df.append(row, ignore_index=True)
 
     return df
