@@ -1,6 +1,6 @@
-"""Functions for behavioral analyses
+"""Functions for signal detection theory
 
-The functions in this module help run stats for behav analyses
+The functions in this module help calculate dprime and ROC curves
 
 """
 
@@ -12,23 +12,23 @@ import pandas as pd
 
 def calc_sdt(data, coding_dict=None, measures=None):
 
-    """Calculate signal detection stats for a pandas df
+    """Calculate signal detection stats (e.g., dprime, criterion, beta) from a pandas dataframe
     Parameters
     ----------
     data : Pandas dataframe
-        dataframe including cols for subject, objective status of each trial (e.g., old, new),
-        response for each trial (e.g., old, new)
+        longform dataframe including cols for subject, objective status of each trial (e.g., signal/old, noise/new),
+        response for each trial (e.g., signal/old, noise/new)
     coding_dict : dict
-        dictionary with information about objective (objective_col; string) and
-        response columns (response_col; string), subject column (subj_col; string),
-        objective old (old; list of strings) and new (new; list of strings) labels,
-        and subjective "old" response labels (old_resp; list of strings).
-            Example:
+        dictionary with information about objective column (objective_col; string) and
+        response column (response_col; string), subject ID column (subj_col; string),
+        objective "signal" (signal; list of strings) and "noise" (noise; list of strings) labels,
+        and subjective "signal" response labels (signal_resp; list of strings).
+            Example coding_dict (for a memory experiment):
             coding_dict = dict(objective_col='TrialType', # column name for new
-                               old=['old'], # objectively old label
-                               new=['similar', 'new'], # objectively new label
+                               signal=['old'], # objectively old label
+                               noise=['similar', 'new'], # objectively new label
                                response_col='Resp_bin', #
-                               old_resp=['Old'],
+                               signal_resp=['Old'],
                                subj_col='Subject',
                                )
     measures : list of strings
@@ -43,9 +43,9 @@ def calc_sdt(data, coding_dict=None, measures=None):
     subj_col = coding_dict['subj_col']
     obj_col = coding_dict['objective_col']
     resp_col = coding_dict['response_col']
-    old = coding_dict['old']
-    new = coding_dict['new']
-    old_resp = coding_dict['old_resp']
+    signal = coding_dict['old']
+    noise = coding_dict['new']
+    signal_resp = coding_dict['old_resp']
 
     # init new dataframe
     df = pd.DataFrame(columns=[subj_col, 'measure', 'value'])
@@ -54,24 +54,24 @@ def calc_sdt(data, coding_dict=None, measures=None):
     for subj in data[subj_col].unique():
 
         data_s = data[data[subj_col] == subj]
-        count_old = data_s[data_s[obj_col].isin(old)].Trial.count()
-        count_new = data_s[data_s[obj_col].isin(new)].Trial.count()
-        count_hit = data_s[data_s[obj_col].isin(old) &
-                           data_s[resp_col].isin(old_resp)].Trial.count()
-        count_fa = data_s[data_s[obj_col].isin(new) &
-                          data_s[resp_col].isin(old_resp)].Trial.count()
+        count_signal = data_s[data_s[obj_col].isin(signal)].Trial.count()
+        count_noise = data_s[data_s[obj_col].isin(noise)].Trial.count()
+        count_hit = data_s[data_s[obj_col].isin(signal) &
+                           data_s[resp_col].isin(signal_resp)].Trial.count()
+        count_fa = data_s[data_s[obj_col].isin(noise) &
+                          data_s[resp_col].isin(signal_resp)].Trial.count()
 
-        # Floors an ceilings are replaced by half hits and half FA's
-        halfHit = 0.5/count_old
-        halfFa = 0.5/count_new
+        # Floors and ceilings are replaced by half hits and half FA's
+        halfHit = 0.5/count_signal
+        halfFa = 0.5/count_noise
 
-        # Calculate hitrate and avoid d' infinity
-        hitRate = count_hit/count_old
+        # Calculate hitrate, avoiding d' infinity
+        hitRate = count_hit/count_signal
         if hitRate == 1: hitRate = 1-halfHit
         if hitRate == 0: hitRate = halfHit
 
-        # Calculate false alarm rate and avoid d' infinity
-        faRate = count_fa/count_new
+        # Calculate false alarm rate, avoiding d' infinity
+        faRate = count_fa/count_noise
         if faRate == 1: faRate = 1-halfFa
         if faRate == 0: faRate = halfFa
 
@@ -92,21 +92,21 @@ def calc_sdt(data, coding_dict=None, measures=None):
 
 def calc_roc(data, coding_dict=None):
 
-    """Calculate ROC curve for a pandas df
+    """Calculate ROC curve for a pandas dataframe
     Parameters
     ----------
     data : Pandas dataframe
-        dataframe including cols for subject, objective status of each trial (e.g., old, new),
+        dataframe including cols for subject, objective status of each trial (e.g., signal/old, noise/new),
         response for each trial (e.g., 1-5 confidence scale)
     coding_dict : dict
         dictionary with information about objective (objective_col; string) and
-        response columns (response_col; string), subject column (subj_col; string),
-        objective old (old; list of strings) and new (new; list of strings) labels,
-        and subjective responses (old_resp; list of strings).
+        response columns (response_col; string), subject ID column (subj_col; string),
+        objective signal (signal; list of strings) and noise (noise; list of strings) labels,
+        and subjective responses (signal_resp; list of strings).
             Example:
             coding_dict = dict(objective_col='TrialType', # column name for new
-                               old=['old'], # objectively old label
-                               new=['similar', 'new'], # objectively new label
+                               signal=['old'], # objectively old label
+                               noise=['similar', 'new'], # objectively new label
                                response_col='Response',
                                subj_col='Subject',
                                )
@@ -122,31 +122,31 @@ def calc_roc(data, coding_dict=None):
     subj_col = coding_dict['subj_col']
     obj_col = coding_dict['objective_col']
     resp_col = coding_dict['response_col']
-    old = coding_dict['old']
-    new = coding_dict['new']
+    signal = coding_dict['old']
+    noise = coding_dict['new']
 
     max_resp = int(data[resp_col].max())
 
     # init new dataframe
-    df = pd.DataFrame(columns=[subj_col, 'conf_level', 'old', 'new'])
+    df = pd.DataFrame(columns=[subj_col, 'conf_level', 'signal', 'noise'])
 
     # calculate dprime for each subj
     for subj in data[subj_col].unique():
 
         data_s = data[data[subj_col] == subj]
-        count_old = data_s[data_s[obj_col].isin(old)].Trial.count()
-        count_new = data_s[data_s[obj_col].isin(new)].Trial.count()
+        count_signal = data_s[data_s[obj_col].isin(signal)].Trial.count()
+        count_noise = data_s[data_s[obj_col].isin(noise)].Trial.count()
 
         for level in range(1, max_resp+1):
-            count_old_tolevel = data_s[(data_s[obj_col].isin(old)) &
+            count_signal_tolevel = data_s[(data_s[obj_col].isin(signal)) &
                                        (data_s[resp_col] >= level)].Trial.count()
-            count_new_tolevel = data_s[(data_s[obj_col].isin(new)) &
+            count_noise_tolevel = data_s[(data_s[obj_col].isin(noise)) &
                                        (data_s[resp_col] >= level)].Trial.count()
 
             row = pd.Series({subj_col: subj,
                             'conf_level': level,
-                            'old': count_old_tolevel/count_old,
-                            'new': count_new_tolevel/count_new})
+                            'signal': count_signal_tolevel/count_old,
+                            'noise': count_noise_tolevel/count_new})
             df = df.append(row, ignore_index=True)
 
     return df
