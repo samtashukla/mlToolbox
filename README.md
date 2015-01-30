@@ -1,2 +1,2 @@
-# sudikoff-
-Functions for behavioral analyses
+# PyBehavToolbox
+Python functions for behavioral analyses
