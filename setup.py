@@ -2,18 +2,18 @@
 #
 # Copyright (C) 2015 Stephanie Gagnon <sgagnon@stanford.edu>
 
-descr = """Sudikoff: Toolboxes for behavioral analyses"""
+descr = """PyBehavToolbox: Toolboxes for behavioral analyses"""
 
 import os
 from setuptools import setup
 
-DISTNAME = 'sudikoff'
+DISTNAME = 'PyBehavToolbox'
 DESCRIPTION = descr
 MAINTAINER = 'Steph Gagnon'
 MAINTAINER_EMAIL = 'sgagnon@stanford.edu'
 LICENSE = 'BSD (3-clause)'
 URL = 'http://stanford.edu/~sgagnon'
-DOWNLOAD_URL = 'https://github.com/sgagnon/sudikoff'
+DOWNLOAD_URL = 'https://github.com/sgagnon/PyBehavToolbox'
 VERSION = '0.0.1.dev'
 
 def check_dependencies():
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         version=VERSION,
         url=URL,
         download_url=DOWNLOAD_URL,
-        packages=['sudikoff'],
+        packages=['PyBehavToolbox'],
         scripts=[],
         classifiers=[
                      'Intended Audience :: Science/Research',
