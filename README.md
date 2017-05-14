@@ -2,7 +2,7 @@
 Python functions for manipulating pandas dataframes, useful for behavioral analyses and 
 general data exploration.
 
-## Dependencies (or just use Anaconda[(https://docs.continuum.io/)])
+### Dependencies
 - numpy
 - scipy
 - pandas
