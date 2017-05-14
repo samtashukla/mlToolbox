@@ -4,6 +4,31 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 
+print 'v1'
+
+# Preproc stuff
+###########################
+from sklearn.utils import shuffle
+from sklearn.preprocessing import PolynomialFeatures, RobustScaler, Imputer
+
+# Models
+###########################
+from sklearn import linear_model
+from sklearn import ensemble
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, \
+                             GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+
+# CV
+###########################
+from sklearn.model_selection import KFold, StratifiedKFold
+
+# Evaluation
+###########################
+from sklearn.metrics import mean_squared_error, median_absolute_error, \
+                            roc_auc_score, f1_score, precision_score, recall_score
+
 ###############################################
 # Functions to create polynomial variables
 ###############################################
@@ -25,7 +50,7 @@ def add_poly_features(data, columns, degree=2):
     data: pandas dataframe
     columns: list of column names (as strings)
     degree: int specifying degree up to which you want added
-    
+
     Returns:
     pandas dataframe with new column for polynomial trend
     """
@@ -129,3 +154,108 @@ def fillna_median(data, columns, grouping=False, val='median', verbose=True):
         if verbose:
             print 'Medians: '
             print meds
+
+###############################################
+# Model fitting
+###############################################
+def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_poly=False):
+    ''' Fit and evaluate models
+    models: example: models = zip(['ols', 'ridge', 'grad_boost'], [ols, ridge, gboost])
+
+    '''
+
+    # Set up dataframe to store output + CV scheme
+    # Is the DV numeric or categorical?
+    if dv_type == 'numeric':
+        df_eval = pd.DataFrame(columns=['model', 'eval_type', 'r2', 'mse', 'med_abs_e'])
+
+        kf = KFold(n_splits=n_cv_folds, shuffle=True)
+        cv = kf.split(X)
+
+    elif dv_type == 'categorical':
+        df_eval = pd.DataFrame(columns=['model', 'eval_type', 'acc', 'auc', 'f1'])
+
+        skf = StratifiedKFold(n_splits=n_cv_folds, shuffle=True)
+        cv = skf.split(X, y)
+
+    # Fit to training, score on test data
+    for i, (train, test) in enumerate(cv):
+        print 'CV fold ' + str(i + 1) + ' ...'
+
+        # Segment into training/testing using cv scheme
+        X_train = X.iloc[train]
+        X_test = X.iloc[test]
+        y_train = y[train]
+        y_test = y[test]
+
+        # Optionally add in interactions/n order polynomial features
+        if n_poly:
+            poly_feat = PolynomialFeatures(degree=n_poly, include_bias=False)
+            X_train = poly_feat.fit_transform(X_train)
+            X_test = poly_feat.fit_transform(X_test)
+
+        # Optionally scale features robustly
+        if scale_x:
+            robust_scaler = RobustScaler()
+            X_train = robust_scaler.fit_transform(X_train)
+            X_test = robust_scaler.transform(X_test)
+
+        # Evaluate
+        for model_name, model in models:
+
+            # Fit the model
+            model.fit(X_train, y_train)
+
+            # Evaluate, iterating through training/testing
+            for xs, ys, eval_type in zip([X_train, X_test],
+                                         [y_train, y_test],
+                                         ['train', 'test']):
+
+                if dv_type == 'numeric':
+
+                    print 'Mean prediction ('+eval_type+ ') : '
+                    print np.mean(model.predict(xs))
+
+                    # med_abs_e: robust to outliers
+                    row = {'model': model_name,
+                           'eval_type': eval_type,
+                           'r2': model.score(xs, ys),
+                           'mse': mean_squared_error(ys, model.predict(xs)),
+                           'med_abs_e': median_absolute_error(ys, model.predict(xs))}
+                elif dv_type == 'categorical':
+
+                    # Binary classification
+                    if len(y.unique()) == 2:
+                        if model_name not in ['random forest', 'knn (5)']:
+                            y_score = model.decision_function(xs)
+
+                            row = {'model': model_name,
+                                   'eval_type': eval_type,
+                                   'acc': model.score(xs, ys),
+                                   'auc': roc_auc_score(ys, y_score),
+                                   'f1': f1_score(ys, model.predict(xs)),
+                                   'precision': precision_score(ys, model.predict(xs)),
+                                   'recall': recall_score(ys, model.predict(xs))}
+                        else:
+                            row = {'model': model_name,
+                                   'eval_type': eval_type,
+                                   'acc': model.score(xs, ys),
+                                   'auc': np.nan,
+                                   'f1': f1_score(ys, model.predict(xs)),
+                                   'precision': precision_score(ys, model.predict(xs)),
+                                   'recall': recall_score(ys, model.predict(xs))}
+                    # >2 class classification
+                    else:
+                        row = {'model': model_name,
+                               'eval_type': eval_type,
+                               'acc': model.score(xs, ys),
+                               'f1': f1_score(ys, model.predict(xs), average='weighted'),
+                               'precision': precision_score(ys, model.predict(xs),
+                                                            average='weighted'),
+                               'recall': recall_score(ys, model.predict(xs),
+                                                      average='weighted')}
+
+                # Append to dataframe
+                df_eval = df_eval.append(row, ignore_index=True)
+
+    return df_eval
