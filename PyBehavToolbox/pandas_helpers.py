@@ -80,13 +80,18 @@ def logit_features(data, columns, upper_bound=1):
     upper_bound: int, usually 1 but could be something like 100
     """
     for col in columns:
+
+        if upper_bound != 1:
+            print 'Rescaling data...'
+            data[col] = data[col] / upper_bound
+
         # deal with 0/1 values
-        if np.sum(data[col].isin([0, upper_bound])) > 0:
+        if np.sum(data[col].isin([0, 1])) > 0:
             print 'Replacing 0s with 0.025, 1s with 0.925...'
             data.loc[data[col] == 0, col] = 0.025
-            data.loc[data[col] == upper_bound, col] = 0.925
+            data.loc[data[col] == 1, col] = 0.925
 
-        data[col] = sp.special.logit(data[col] / upper_bound)
+        data[col] = sp.special.logit(data[col])
 
 ###############################################
 # Functions to impute missing data
