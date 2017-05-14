@@ -86,7 +86,7 @@ def logit_features(data, columns, upper_bound=1):
             data.loc[data[col] == 0, col] = 0.025
             data.loc[data[col] == upper_bound, col] = 0.925
 
-        data[col] = np.logit(data[col] / upper_bound)
+        data[col] = sp.special.logit(data[col] / upper_bound)
 
 ###############################################
 # Functions to impute missing data
@@ -121,6 +121,6 @@ def fillna_median(data, columns, grouping=False, val='median', verbose=True):
         else:
             meds = data[col].median()
             data[col].fillna(meds, inplace=True)
-        if verbose: 
+        if verbose:
             print 'Medians: '
             print meds
