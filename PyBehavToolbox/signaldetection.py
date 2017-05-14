@@ -145,8 +145,8 @@ def calc_roc(data, coding_dict=None):
 
             row = pd.Series({subj_col: subj,
                             'conf_level': level,
-                            'signal': count_signal_tolevel/count_old,
-                            'noise': count_noise_tolevel/count_new})
+                            'signal': count_signal_tolevel/count_signal,
+                            'noise': count_noise_tolevel/count_noise})
             df = df.append(row, ignore_index=True)
 
     return df
