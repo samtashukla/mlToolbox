@@ -14,8 +14,8 @@ def poly(x, degree=2):
     http://stackoverflow.com/questions/41317127/python-equivalent-to-r-poly-function
     """
     x = np.array(x)
-    X = np.transpose(np.vstack((x**k for k in range(degree + 1))))
-    return np.linalg.qr(X)[0][:,1:]
+    X_trans = np.transpose(np.vstack((x**k for k in range(degree + 1))))
+    return np.linalg.qr(X_trans)[0][:, 1:]
 
 def add_poly_features(data, columns, degree=2):
     """Add polynomial features to df
@@ -25,19 +25,20 @@ def add_poly_features(data, columns, degree=2):
     data: pandas dataframe
     columns: list of column names (as strings)
     degree: int specifying degree up to which you want added
-
-    Returns: 
+    
+    Returns:
     pandas dataframe with new column for polynomial trend
-    """    
+    """
+
     if degree != 2:
         print 'Only works w/2 degrees right now...'
         return
-    
+
     for col in columns:
         new_col = col + '_poly' + str(degree)
         data[new_col] = np.nan
         data[[col, new_col]] = poly(data[col], degree=degree)
-        
+
     return data
 
 ###############################################
@@ -53,7 +54,7 @@ def winsorize_features(data, columns, limit=0.025):
     """
     for col in columns:
         data[col] = sp.stats.mstats.winsorize(data[col], limits=[limit, limit])
-        
+
 def log_features(data, columns):
     """Log transform the columns
 
@@ -62,7 +63,30 @@ def log_features(data, columns):
     columns: list of column names (as strings)
     """
     for col in columns:
+        # deal with 0/1 values
+        if np.sum(data[col] == 0) > 0:
+            print 'Replacing 0s with 0.025...'
+            data.loc[data[col] == 0, col] = 0.025
+
         data[col] = np.log(data[col])
+
+
+def logit_features(data, columns, upper_bound=1):
+    """Logit transform the columns
+
+    Args:
+    data: pandas dataframe
+    columns: list of column names (as strings)
+    upper_bound: int, usually 1 but could be something like 100
+    """
+    for col in columns:
+        # deal with 0/1 values
+        if np.sum(data[col].isin([0, upper_bound])) > 0:
+            print 'Replacing 0s with 0.025, 1s with 0.925...'
+            data.loc[data[col] == 0, col] = 0.025
+            data.loc[data[col] == upper_bound, col] = 0.925
+
+        data[col] = np.logit(data[col] / upper_bound)
 
 ###############################################
 # Functions to impute missing data
