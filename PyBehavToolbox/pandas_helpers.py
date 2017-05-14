@@ -160,7 +160,7 @@ def fillna_median(data, columns, grouping=False, val='median', verbose=True):
 ###############################################
 def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_poly=False):
     ''' Fit and evaluate models
-    models: example: models = zip(['ols', 'ridge', 'grad_boost'], [ols, ridge, gboost])
+    models: dict, example: models = {'ols': ols, 'ridge': ridge, 'grad_boost': gboost}
 
     '''
 
@@ -201,7 +201,7 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
             X_test = robust_scaler.transform(X_test)
 
         # Evaluate
-        for model_name, model in models:
+        for model_name, model in models.items():
 
             # Fit the model
             model.fit(X_train, y_train)
