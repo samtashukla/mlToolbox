@@ -2,6 +2,12 @@
 Python functions for manipulating pandas dataframes, useful for behavioral analyses and 
 general data exploration.
 
+## Dependencies (or just use Anaconda[(https://docs.continuum.io/)])
+- numpy
+- scipy
+- pandas
+- scikit-learn
+
 ## pandas_helpers.py
 Contains various functions to preprocess pandas dataframes (e.g., transforming features, imputing missing data), as well as functions to fit and evaluate various models using `sklearn`. 
 
