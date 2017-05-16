@@ -17,7 +17,7 @@ from sklearn import linear_model
 from sklearn import ensemble
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, \
                              GradientBoostingClassifier
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier
 
 # CV
@@ -26,7 +26,7 @@ from sklearn.model_selection import KFold, StratifiedKFold
 
 # Evaluation
 ###########################
-from sklearn.metrics import mean_squared_error, median_absolute_error, \
+from sklearn.metrics import mean_squared_error, median_absolute_error, explained_variance_score,\
                             roc_auc_score, f1_score, precision_score, recall_score
 
 ###############################################
@@ -118,6 +118,35 @@ def logit_features(data, columns, upper_bound=1):
 
         data[col] = sp.special.logit(data[col])
 
+def create_summary_df(data, grouping_list, col_dict):
+    '''
+    Input:
+    df: pandas df
+    grouping_list: list of variable names (str) to perform grouping on
+    col_dict: dict of colname keys and lists of functions to perform aggregation over
+
+    Output:
+    dagg: pandas df, aggregated columns (functionnames)
+
+    Example:
+    col_dict = {'LATITUDE': [np.median], 'MTD-PRCP-NORMAL': [max, np.median]}
+    grouping_list = [df.index.month]
+    '''
+
+    for i, (col_name, func_list) in enumerate(col_dict.items()):
+        print col_name
+
+        d = data.groupby(grouping_list)[col_name].agg(func_list)
+        d.rename(columns=lambda x: col_name + '_' + x, inplace=True)
+
+        if i == 0:
+            dagg = d.copy()
+        else:
+            dagg = dagg.join(d)
+
+    return dagg
+
+
 ###############################################
 # Functions to impute missing data
 ###############################################
@@ -160,14 +189,18 @@ def fillna_median(data, columns, grouping=False, val='median', verbose=True):
 ###############################################
 def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_poly=False):
     ''' Fit and evaluate models
+    X: samples x features dataframe
+    y: labels/DV values
+    dv_type: str, indicating type of y/dependent variable ("numeric" or "categorical")
     models: dict, example: models = {'ols': ols, 'ridge': ridge, 'grad_boost': gboost}
-
+    n_cv_folds: int, number of cross-validation folds
     '''
 
     # Set up dataframe to store output + CV scheme
     # Is the DV numeric or categorical?
     if dv_type == 'numeric':
-        df_eval = pd.DataFrame(columns=['model', 'eval_type', 'r2', 'mse', 'med_abs_e'])
+        df_eval = pd.DataFrame(columns=['model', 'eval_type', 'r2', 'mse', 
+                                        'med_abs_e', 'explained_var'])
 
         kf = KFold(n_splits=n_cv_folds, shuffle=True)
         cv = kf.split(X)
@@ -211,6 +244,7 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
                                          [y_train, y_test],
                                          ['train', 'test']):
 
+                # y is numeric
                 if dv_type == 'numeric':
 
                     print 'Mean prediction ('+eval_type+ ') : '
@@ -221,7 +255,10 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
                            'eval_type': eval_type,
                            'r2': model.score(xs, ys),
                            'mse': mean_squared_error(ys, model.predict(xs)),
-                           'med_abs_e': median_absolute_error(ys, model.predict(xs))}
+                           'med_abs_e': median_absolute_error(ys, model.predict(xs)),
+                           'explained_var': explained_variance_score(ys, model.predict(xs))}
+                
+                # y is a category
                 elif dv_type == 'categorical':
 
                     # Binary classification
