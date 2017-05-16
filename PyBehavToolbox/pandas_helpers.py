@@ -4,7 +4,7 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 
-print 'v1'
+print 'v2'
 
 # Preproc stuff
 ###########################
@@ -79,6 +79,16 @@ def winsorize_features(data, columns, limit=0.025):
     """
     for col in columns:
         data[col] = sp.stats.mstats.winsorize(data[col], limits=[limit, limit])
+
+def zscore_features(data, columns):
+    """Zscore columns
+
+    Args:
+    data: pandas dataframe
+    columns: list of column names (as strings)
+    """
+    for col in columns:
+        data[col] = (data[col] - data[col].mean())/data[col].std(ddof=0)
 
 def log_features(data, columns):
     """Log transform the columns
