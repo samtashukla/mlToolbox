@@ -88,7 +88,7 @@ def zscore_features(data, columns):
     columns: list of column names (as strings)
     """
     for col in columns:
-        data[col] = (data[col] - data[col].mean())/data[col].std(ddof=0)
+        data[col] = (data[col] - data[col].mean())/data[col].std()
 
 def log_features(data, columns):
     """Log transform the columns
