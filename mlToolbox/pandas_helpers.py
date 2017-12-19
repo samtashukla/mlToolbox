@@ -1,10 +1,10 @@
-#!/Users/sgagnon/anaconda/bin/python
+#!/Users/stephaniesorenson/anaconda/bin/python
 
 import numpy as np
 import scipy as sp
 import pandas as pd
 
-print 'v2'
+print('v2')
 
 # Preproc stuff
 ###########################
@@ -56,7 +56,7 @@ def add_poly_features(data, columns, degree=2):
     """
 
     if degree != 2:
-        print 'Only works w/2 degrees right now...'
+        print('Only works w/2 degrees right now...')
         return
 
     for col in columns:
@@ -100,7 +100,7 @@ def log_features(data, columns):
     for col in columns:
         # deal with 0/1 values
         if np.sum(data[col] == 0) > 0:
-            print 'Replacing 0s with 0.025...'
+            print('Replacing 0s with 0.025...')
             data.loc[data[col] == 0, col] = 0.025
 
         data[col] = np.log(data[col])
@@ -117,12 +117,12 @@ def logit_features(data, columns, upper_bound=1):
     for col in columns:
 
         if upper_bound != 1:
-            print 'Rescaling data...'
+            print('Rescaling data...')
             data[col] = data[col] / upper_bound
 
         # deal with 0/1 values
         if np.sum(data[col].isin([0, 1])) > 0:
-            print 'Replacing 0s with 0.025, 1s with 0.925...'
+            print('Replacing 0s with 0.025, 1s with 0.925...')
             data.loc[data[col] == 0, col] = 0.025
             data.loc[data[col] == 1, col] = 0.925
 
@@ -144,7 +144,7 @@ def create_summary_df(data, grouping_list, col_dict):
     '''
 
     for i, (col_name, func_list) in enumerate(col_dict.items()):
-        print col_name
+        print(col_name)
 
         d = data.groupby(grouping_list)[col_name].agg(func_list)
         d.rename(columns=lambda x: col_name + '_' + x, inplace=True)
@@ -170,7 +170,7 @@ def fillna_mode(data, columns, verbose=True):
     """
     for col in columns:
         fill_val = data[col].mode()[0]
-        if verbose: print 'Filling ' + col + ' with: ' + fill_val
+        if verbose: print('Filling ' + col + ' with: ' + fill_val)
         data[col].fillna(fill_val, inplace=True)
 
 def fillna_median(data, columns, grouping=False, val='median', verbose=True):
@@ -191,8 +191,8 @@ def fillna_median(data, columns, grouping=False, val='median', verbose=True):
             meds = data[col].median()
             data[col].fillna(meds, inplace=True)
         if verbose:
-            print 'Medians: '
-            print meds
+            print('Medians: ')
+            print(meds)
 
 ###############################################
 # Model fitting
@@ -209,7 +209,7 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
     # Set up dataframe to store output + CV scheme
     # Is the DV numeric or categorical?
     if dv_type == 'numeric':
-        df_eval = pd.DataFrame(columns=['model', 'eval_type', 'r2', 'mse', 
+        df_eval = pd.DataFrame(columns=['model', 'eval_type', 'r2', 'mse',
                                         'med_abs_e', 'explained_var'])
 
         kf = KFold(n_splits=n_cv_folds, shuffle=True)
@@ -223,7 +223,7 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
 
     # Fit to training, score on test data
     for i, (train, test) in enumerate(cv):
-        print 'CV fold ' + str(i + 1) + ' ...'
+        print('CV fold ' + str(i + 1) + ' ...')
 
         # Segment into training/testing using cv scheme
         X_train = X.iloc[train]
@@ -257,8 +257,8 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
                 # y is numeric
                 if dv_type == 'numeric':
 
-                    print 'Mean prediction ('+eval_type+ ') : '
-                    print np.mean(model.predict(xs))
+                    print('Mean prediction ('+eval_type+ ') : ')
+                    print(np.mean(model.predict(xs)))
 
                     # med_abs_e: robust to outliers
                     row = {'model': model_name,
@@ -267,7 +267,7 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
                            'mse': mean_squared_error(ys, model.predict(xs)),
                            'med_abs_e': median_absolute_error(ys, model.predict(xs)),
                            'explained_var': explained_variance_score(ys, model.predict(xs))}
-                
+
                 # y is a category
                 elif dv_type == 'categorical':
 

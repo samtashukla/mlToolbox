@@ -2,18 +2,18 @@
 #
 # Copyright (C) 2015 Stephanie Gagnon <sgagnon@stanford.edu>
 
-descr = """PyBehavToolbox: Toolboxes for behavioral analyses"""
+descr = """mlToolbox: Toolboxes for behavioral analyses"""
 
 import os
 from setuptools import setup
 
-DISTNAME = 'PyBehavToolbox'
+DISTNAME = 'mlToolbox'
 DESCRIPTION = descr
-MAINTAINER = 'Steph Gagnon'
-MAINTAINER_EMAIL = 'sgagnon@stanford.edu'
+MAINTAINER = 'Steph Gagnon Sorenson'
+MAINTAINER_EMAIL = 'stephanie.a.gagnon@gmail.com'
 LICENSE = 'BSD (3-clause)'
 URL = 'http://stanford.edu/~sgagnon'
-DOWNLOAD_URL = 'https://github.com/sgagnon/PyBehavToolbox'
+DOWNLOAD_URL = 'https://github.com/sgagnon/mlToolbox'
 VERSION = '0.0.1.dev'
 
 def check_dependencies():
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         version=VERSION,
         url=URL,
         download_url=DOWNLOAD_URL,
-        packages=['PyBehavToolbox'],
+        packages=['mlToolbox'],
         scripts=[],
         classifiers=[
                      'Intended Audience :: Science/Research',

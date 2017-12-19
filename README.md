@@ -1,6 +1,6 @@
-# PyBehavToolbox
-Python functions for manipulating pandas dataframes, useful for behavioral analyses and 
-general data exploration.
+# mlToolbox
+Python functions for manipulating pandas dataframes, useful for behavioral analyses,
+general data exploration, and modeling.
 
 ### Dependencies
 - numpy
