@@ -4,7 +4,7 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 
-print('v2')
+print('v3')
 
 # Preproc stuff
 ###########################
@@ -197,7 +197,8 @@ def fillna_median(data, columns, grouping=False, val='median', verbose=True):
 ###############################################
 # Model fitting
 ###############################################
-def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_poly=False):
+def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2,
+                        scale_x=False, n_poly=False, verbose=False):
     ''' Fit and evaluate models
     X: samples x features dataframe
     y: labels/DV values
@@ -257,8 +258,9 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
                 # y is numeric
                 if dv_type == 'numeric':
 
-                    print('Mean prediction ('+eval_type+ ') : ')
-                    print(np.mean(model.predict(xs)))
+                    if verbose:
+                        print('Mean prediction ('+eval_type+ ') : ')
+                        print(np.mean(model.predict(xs)))
 
                     # med_abs_e: robust to outliers
                     row = {'model': model_name,
