@@ -273,7 +273,7 @@ def fit_evaluate_models(X, y, dv_type, models, n_cv_folds=2, scale_x=False, n_po
 
                     # Binary classification
                     if len(y.unique()) == 2:
-                        if model_name not in ['random forest', 'knn (5)']:
+                        if model_name not in ['random forest', 'knn (5)', 'dummy']:
                             y_score = model.decision_function(xs)
 
                             row = {'model': model_name,
